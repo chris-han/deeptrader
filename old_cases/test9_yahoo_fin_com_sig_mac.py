@@ -86,11 +86,16 @@ class TestStrategy(bt.Strategy):
         self.dataclose = self.datas[0].close
         self.buy_signals = []  # Store the buy signal dates
         self.sell_signals = []  # Store the sell signal dates
+        self.short_ma = bt.indicators.SimpleMovingAverage(self.datas[0].close, period=1) #2
+        self.long_ma = bt.indicators.SimpleMovingAverage(self.datas[0].close, period=2) #4
+        # self.rsi = bt.indicators.RelativeStrengthIndex(self.datas[0].close, period=6)
+        # self.boll = bt.indicators.BollingerBands(self.datas[0], period=20)
+        # self.macd = bt.indicators.MACD(self.datas[0].close)
         self.predict_signals_one_day = []  # Store one-day prediction signals
         self.predict_signals_two_day = []  # Store two-day prediction signals
         self.predict_signals_three_day = []  # Store three-day prediction signals
         self.predict_signals_four_day = []  # Store four-day prediction signals
-        self.sma = bt.indicators.TripleExponentialMovingAverage(self.datas[0], period=2)
+        # self.tema = bt.indicators.TripleExponentialMovingAverage(self.datas[0], period=2)
         
         # Store the last date in the dataset for prediction timing
         self.last_dataset_date = df.index[-1]
@@ -134,12 +139,24 @@ class TestStrategy(bt.Strategy):
             except Exception as e:
                 print(f"Prediction error: {e}")
 
-        if self.dataclose[0] > self.dataclose[-1]:
+        # if self.dataclose[0] > self.dataclose[-1]:
+        if self.short_ma[0] > self.long_ma[0] and self.short_ma[-1] < self.long_ma[-1]:
+        # if self.rsi[0] < 40 and self.rsi[-1] >= 40:
+        # if self.dataclose[0] < self.boll.lines.bot:
+        # if self.macd.macd[0] > self.macd.signal[0] and self.macd.macd[-1] <= self.macd.signal[-1]:
+        # if self.data.close > self.tema:
+        # if self.dataclose[0] < self.boll.lines.bot:
             self.buy_signals.append((self.datas[0].datetime.datetime(0), self.dataclose[0]))
             self.buy(size=10)
             print(f'Buy signal: {self.dataclose[0]} at {self.datas[0].datetime.datetime(0)}')
 
-        elif self.dataclose[0] < self.dataclose[-1]:
+        # elif self.dataclose[0] < self.dataclose[-1]:
+        elif self.short_ma[0] < self.long_ma[0] and self.short_ma[-1] > self.long_ma[-1]:
+        # elif self.rsi[0] > 65 and self.rsi[-1] <= 65:
+        # elif self.dataclose[0] > self.boll.lines.top:
+        # elif self.macd.macd[0] < self.macd.signal[0] and self.macd.macd[-1] >= self.macd.signal[-1]:
+        # elif self.data.close < self.tema:
+        # elif self.dataclose[0] > self.boll.lines.top:
             self.sell_signals.append((self.datas[0].datetime.datetime(0), self.dataclose[0]))
             self.sell(size=10)
             print(f'Sell signal: {self.dataclose[0]} at {self.datas[0].datetime.datetime(0)}')
