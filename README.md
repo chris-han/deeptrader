@@ -3,7 +3,7 @@ yahoo_fin as data reader
 backtrader as strategy engine
 sklearn as predition model
 
-```mermaid
+``` mermaid
 flowchart TB
     subgraph "元数据采集与血缘追踪层"
         MetaCollector[元数据智能采集器<br/>Apache Atlas/DataHub]
@@ -50,4 +50,67 @@ flowchart TB
     LocalLLM --> AssetClassifier
     LocalLLM --> QualityMonitor
     LocalLLM --> ExternalDataIntegrator
+```
+
+``` mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant SCM as Source Control (Git)
+    participant Jenkins as Jenkins Pipeline
+    participant SonarQube as SonarQube
+    participant TestFramework as Test Framework
+    participant ArtifactRepo as Artifact Repository
+    participant K8s as Kubernetes
+    participant Monitor as Monitoring System
+
+    Dev->>SCM: Push Code
+    SCM->>Jenkins: Trigger Build
+    
+    Jenkins->>Jenkins: Code Checkout
+    Note right of Jenkins: Plugins Used:<br/>- Git Plugin<br/>- Pipeline Plugin
+
+    Jenkins->>SonarQube: Static Code Analysis
+    Note right of Jenkins: Plugins Used:<br/>- SonarQube Scanner Plugin<br/>- Quality Gates
+
+    Jenkins->>TestFramework: Run Unit Tests
+    Note right of Jenkins: Plugins Used:<br/>- Python Plugin<br/>- pytest<br/>- Coverage Plugin
+
+    Jenkins->>Jenkins: Build Python Package
+    Note right of Jenkins: Plugins Used:<br/>- Python Packaging Plugin<br/>- Wheel/Setuptools
+
+    Jenkins->>ArtifactRepo: Push Artifact
+    Note right of Jenkins: Plugins Used:<br/>- Artifactory Plugin<br/>- Nexus Plugin
+
+    Jenkins->>K8s: Deploy to Kubernetes
+    Note right of Jenkins: Plugins Used:<br/>- Kubernetes Deployment Plugin<br/>- Cloud Foundry Plugin
+
+    K8s->>Monitor: Send Metrics
+    Note right of Jenkins: Plugins Used:<br/>- Prometheus Plugin<br/>- Grafana Plugin
+```
+``` mermaid
+sequenceDiagram
+    participant App as Application
+    participant AKS as Azure Kubernetes Service
+    participant ContainerInsights as Azure Container Insights
+    participant LogAnalytics as Azure Log Analytics
+    participant AppInsights as Azure Application Insights
+    participant Monitor as Azure Monitor
+    participant Grafana as Grafana Dashboard
+    participant AlertSystem as Alert Management
+
+    App->>AKS: Generates Logs/Metrics
+    AKS->>ContainerInsights: Collect Cluster Metrics
+    
+    ContainerInsights->>LogAnalytics: Store Cluster Logs
+    App->>AppInsights: Send Application Telemetry
+    
+    LogAnalytics->>Monitor: Centralize Logs
+    AppInsights->>Monitor: Push Application Metrics
+    
+    Monitor->>Grafana: Stream Visualization Data
+    Monitor->>AlertSystem: Trigger Alerts
+    
+    AlertSystem->>AlertSystem: Evaluate Alert Conditions
+    AlertSystem->>Slack: Send Notifications
+    AlertSystem->>PagerDuty: Escalate Critical Alerts
 ```

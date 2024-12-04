@@ -22,7 +22,7 @@ def get_data_with_cache(ticker, start_date, end_date, index_as_date=True, interv
     return get_data(ticker, start_date=start_date, end_date=end_date, index_as_date=index_as_date, interval=interval)
 
 # Example usage
-data = get_data_with_cache('NVDA', '10/01/2024', '12/2/2024')
+data = get_data_with_cache('OKLO', '10/01/2024', '12/04/2024')
 
 # Download Data
 # data = get_data('NVDA', start_date='10/01/2024', end_date='11/29/2024',index_as_date = True, interval="1d")
