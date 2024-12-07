@@ -21,8 +21,8 @@ def get_data_with_cache(ticker, start_date, end_date, index_as_date=True, interv
     # Here, we call the original get_data function
     return get_data(ticker, start_date=start_date, end_date=end_date, index_as_date=index_as_date, interval=interval)
 
-# Example usage
-data = get_data_with_cache('OKLO', '10/01/2024', '12/04/2024')
+
+data = get_data_with_cache('OKLO', '10/01/2024', '12/06/2024')
 
 # Download Data
 # data = get_data('NVDA', start_date='10/01/2024', end_date='11/29/2024',index_as_date = True, interval="1d")
@@ -95,7 +95,7 @@ class TestStrategy(bt.Strategy):
         self.predict_signals_two_day = []  # Store two-day prediction signals
         self.predict_signals_three_day = []  # Store three-day prediction signals
         self.predict_signals_four_day = []  # Store four-day prediction signals
-        self.tema = bt.indicators.TripleExponentialMovingAverage(self.datas[0], period=2)
+        self.tema = bt.indicators.TripleExponentialMovingAverage(self.datas[0], period=6)
         
         # Store the last date in the dataset for prediction timing
         self.last_dataset_date = df.index[-1]
