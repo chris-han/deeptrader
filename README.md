@@ -266,3 +266,50 @@ sudo systemctl enable amazon-cloudwatch-agent
 docker pull ${DOCKER_REGISTRY}/my-app:latest
 docker run -d -p 3000:3000 ${DOCKER_REGISTRY}/my-app:latest
 ```
+
+```mermaid
+graph LR
+    subgraph "Change Models & Motivation"
+    
+    A[Change Management & Motivation] --> B(ADKAR);
+    A --> C(DCOM);
+        B --> B1(Awareness);
+        B --> B2(Desire);
+        B --> B3(Knowledge);
+        B --> B4(Ability);
+        B --> B5(Reinforcement);
+        C --> C1(Direction);
+        C --> C2(Competence);
+        C --> C3(Opportunity);
+        C --> C4(Motivation);
+
+    end
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style B fill:#ccf,stroke:#333,stroke-width:2px
+    style C fill:#ccf,stroke:#333,stroke-width:2px
+
+    
+    %% Shared Concepts
+    B1--Shared: Goal-Setting-->C1
+    B4--Shared: Ability-->C2
+    B2--Shared: Desire/Willingness-->C4
+    B5--Shared: Sustain-->C1
+     
+    %% ADKAR - Motivation Connection
+    B1--Motivation: Reason --> A
+    B2--Motivation: Intensity --> A
+    B3--Motivation: Ability--> A
+    B4--Motivation: Effort --> A
+    B5--Motivation: Persistence--> A
+    
+    %% DCOM - Motivation Connection
+    C1--Motivation: Direction --> A
+    C2--Motivation: Effort, Ability--> A
+    C3--Motivation: Reason--> A
+    C4--Motivation: Intensity--> A
+    
+    %% Differences
+    style B fill:#ccf,stroke:#333,stroke-width:2px
+    style C fill:#ccf,stroke:#333,stroke-width:2px
+
+```
