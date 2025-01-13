@@ -1,49 +1,72 @@
 import yfinance as yf
 import json
+import os
+import bcrypt
 
 class User:
     def __init__(self, user_id, username, password_hash):
         self.user_id = user_id
         self.username = username
         self.password_hash = password_hash
+        self.watchlist = {}
 
     def __str__(self):
-      return f"User(user_id={self.user_id}, username='{self.username}')"
+        return f"User(user_id={self.user_id}, username='{self.username}')"
 
+    def to_dict(self):
+        if isinstance(self.password_hash, bytes):
+          password_hash_str = self.password_hash.decode('utf-8')
+        else:
+           password_hash_str = self.password_hash
+        return {
+            'user_id': self.user_id,
+            'username': self.username,
+            'password_hash': password_hash_str,
+            'watchlist': self.watchlist
+        }
+
+    @classmethod
+    def from_dict(cls, user_dict):
+        password_hash = user_dict.get('password_hash')
+        if isinstance(password_hash, str):
+            password_hash = password_hash.encode('utf-8')
+        return cls(
+            user_dict['user_id'],
+            user_dict['username'],
+            password_hash
+        )
 
 class StockData:
-    def __init__(self, symbol, price, pe_ratio, eps, dividend_yield, market_cap, beta):
+    def __init__(self, symbol, price, pe_ratio, eps, dividend_yield, market_cap, volume, beta):
         self.symbol = symbol
         self.price = price
         self.pe_ratio = pe_ratio
         self.eps = eps
         self.dividend_yield = dividend_yield
         self.market_cap = market_cap
+        self.volume = volume
         self.beta = beta
-
     def __str__(self):
-      return f"{self.symbol}: Price={self.price}, P/E={self.pe_ratio}, EPS={self.eps}, Yield={self.dividend_yield}, Cap={self.market_cap}, Beta={self.beta}"
-
+        return f"{self.symbol}: Price={self.price}, P/E={self.pe_ratio}, EPS={self.eps}, Yield={self.dividend_yield}, Cap={self.market_cap}, Volume={self.volume}, Beta={self.beta}"
+ 
     @classmethod
     def from_yahoo_data(cls, symbol, yahoo_data):
         """Create a StockData object from Yahoo Finance data."""
         return cls(
             symbol=symbol,
-            price=yahoo_data.get('currentPrice', None),
-            pe_ratio=yahoo_data.get('trailingPE', None),
-            eps=yahoo_data.get('trailingEps', None),
-            dividend_yield=yahoo_data.get('dividendYield', None),
-            market_cap=yahoo_data.get('marketCap', None),
-            beta=yahoo_data.get('beta', None)
+            price=yahoo_data.info.get('previousClose', None),
+            pe_ratio=yahoo_data.info.get('trailingPE', None),
+            eps=yahoo_data.info.get('trailingEps', None),
+            dividend_yield=yahoo_data.info.get('dividendYield', None),
+            market_cap = yahoo_data.info.get('marketCap', None),
+            volume = yahoo_data.info.get('volume', None),
+            beta=yahoo_data.info.get('beta', None)
         )
-
-
 
 class Filter:
     def __init__(self, criteria, operator):
         self.criteria = criteria  # e.g., {"pe_ratio": 15}
         self.operator = operator # e.g., "less than"
-
     def apply(self, stocks):
         filtered_stocks = []
         for stock in stocks:
@@ -104,10 +127,10 @@ class SavedList:
         self.stocks = stocks if stocks else []
 
     def add_stock(self, stock):
-      self.stocks.append(stock)
+        self.stocks.append(stock)
 
     def remove_stock(self, stock):
-      self.stocks.remove(stock)
+        self.stocks.remove(stock)
 
     def __str__(self):
         return f"List(list_id={self.list_id}, name='{self.name}', stocks=[{', '.join([stock.symbol for stock in self.stocks])}])"
@@ -121,7 +144,7 @@ class Alert:
 
     def check_condition(self):
         if self.stock.price is None:
-           return False
+            return False
         if self.price_condition == "above" and self.stock.price > self.price_value:
             return True
         if self.price_condition == "below" and self.stock.price < self.price_value:
@@ -135,7 +158,13 @@ class Alert:
         return f"Alert(alert_id={self.alert_id}, stock='{self.stock.symbol}', price_condition='{self.price_condition}', price_value={self.price_value})"
 
 class StockScreenApp:
+    USERS_FILE = 'users.json'
+
     def __init__(self):
+        if not os.path.exists(self.USERS_FILE):
+            with open(self.USERS_FILE, 'w') as f:
+                json.dump([], f) # Initialize with an empty JSON array
+    
         self.users = {}
         self.screens = {}
         self.lists = {}
@@ -145,35 +174,53 @@ class StockScreenApp:
         self.list_id_counter = 1
         self.alert_id_counter = 1
         self.current_user = None
+        self.load_users()
 
+    def load_users(self):
+        if os.path.exists(self.USERS_FILE):
+            if os.stat(self.USERS_FILE).st_size > 0:
+                with open(self.USERS_FILE, 'r') as file:
+                    user_dicts = json.load(file)
+                    for user_dict in user_dicts:
+                        user = User.from_dict(user_dict)
+                        self.users[user.user_id] = user
+                        if user.user_id >= self.user_id_counter:
+                            self.user_id_counter = user.user_id + 1
+
+    def save_users(self):
+        with open(self.USERS_FILE, 'w') as file:
+            json.dump([user.to_dict() for user in self.users.values()], file)
 
     def create_account(self, username, password):
-      user = User(self.user_id_counter, username, hash(password))
-      self.users[self.user_id_counter] = user
-      self.user_id_counter += 1
-      return user
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+        user = User(self.user_id_counter, username, hashed_password)
+        self.users[self.user_id_counter] = user
+        self.user_id_counter += 1
+        self.save_users()
+        return user
 
     def login(self, username, password):
         for user_id, user in self.users.items():
-          if user.username == username and user.password_hash == hash(password):
-            self.current_user = user
-            return user
+            if user.username == username and bcrypt.checkpw(password.encode('utf-8'), user.password_hash):
+                self.current_user = user
+                return user
         return None
 
     def logout(self):
-      self.current_user = None
+        self.current_user = None
 
     def _load_stock_data(self, symbols):
-      stock_data = {}
-      for symbol in symbols:
-        try:
-          stock = yf.Ticker(symbol)
-          data = stock.fast_info
-          if data:
-            stock_data[symbol] = StockData.from_yahoo_data(symbol, data)
-        except Exception as e:
-          print(f"Could not get data for {symbol}: {e}")
-      return stock_data
+        stock_data = {}
+        for symbol in symbols:
+            try:
+                stock = yf.Ticker(symbol)
+                # data = stock.fast_info
+                if stock:
+                    stock_data[symbol] = StockData.from_yahoo_data(symbol, stock)
+            except Exception as e:
+                print(f"Could not get data for {symbol}: {e}")
+        return stock_data
 
     def search(self, filters, symbols):
       stocks = list(self._load_stock_data(symbols).values())
@@ -278,13 +325,16 @@ class StockScreenApp:
                   filter_input = input("Enter filter criteria (e.g., 'pe_ratio', 'less than', 15  or type 'done' to finish), delimited by ',':")
                   if filter_input == "done":
                     break
-                  filters = filter_input.split(',')
-                  filter = Filter( {filters[0]: float(filters[2])}, filters[1])
-                  screen.add_filter(filter)
+                  if filter_input.strip():
+                      filters = filter_input.split(',')
+                      filter = Filter( {filters[0]: float(filters[2])}, filters[1])
+                      screen.add_filter(filter)
+                  else:
+                      print("No filter criteria entered.")
                 self.save_screen(screen)
                 print("Screen saved.")
             elif choice == '6' and self.current_user:
-              screen_id = int(input("Enter Screen ID to load: "))
+              screen_id = int(input("Enter Screen ID(not name) to load: "))
               screen = self.load_screen(screen_id)
               if screen:
                  symbols = input("Enter stock symbols separated by commas: ").split(',')
