@@ -3,12 +3,14 @@ from p_algorism import count_jumps  # Replace your_module
 
 def test_count_jumps_sample_input():
     jumps = [3, 4, 1, 2, 5, 6, 9, 0, 1, 2, 3, 1]
+    # print(f"Type of jumps: {type(jumps)}")
     start_position = 0
     expected_jumps = 4
     assert count_jumps(jumps, start_position) == expected_jumps
 
 def test_count_jumps_stuck():
     jumps = [2, 1, 0, 2]
+    print(f"Type of jumps: {type(jumps)}")
     start_position = 0
     expected_jumps = -1
     assert count_jumps(jumps, start_position) == expected_jumps

@@ -1,3 +1,6 @@
+# import array
+
+# my_array = array.array('i', [1, 2, 3, 4, 5])  # 'i' for signed integers
 def count_jumps(list, start_position=0):
     """
     Calculates the number of jumps required to exit the list, starting from a given position.
@@ -27,10 +30,10 @@ def count_jumps(list, start_position=0):
 
 
 if __name__ == "__main__":
-    input_line = input()
-    parts = input_line.split()
+    input_line = input('please input,all but the last number are the jump values,the last number is the start position. delimited by ",": \n\r')
+    parts = input_line.split(',')
     jumps = list(map(int, parts[:-1])) # all but the last number are the jump values
     start_position = int(parts[-1])  # the last number is the start position
 
     result = count_jumps(jumps, start_position)
-    print(result)
+    print(f"result: {result}")

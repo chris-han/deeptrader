@@ -6,7 +6,7 @@ Ensure original get_data function is called with correct parameters
 # Edge Case 
 Verify string dates are passed through without modification
 '''
-
+from unittest.mock import Mock
 import pytest
 from datetime import datetime
 from case9_yahoo_fin_com_sig_tema_best import get_data_with_cache,prepare_prediction_data
